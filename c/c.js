@@ -1,20 +1,27 @@
-(function(){
+(function() {
 
-window.App = window.App || {};
+  'use strict';
+
+  window.App = window.App || {};
 
 // -------------
 // Post Model
 // -------------
 var Post = Backbone.Model.extend({
-  idAttribute: 'objectId',
-  defaults: {
-    title: '',
-    body: ''
+  idAttribute: "objectId",
+
+  defaults: function(attributes) {
+    attributes = attributes || {};
+    _.defaults(attributes, {
+      title: '',
+      body: '',
+    });
+    return attributes;
   }
 });
 
 // -------------
-// Post Collection
+// Posts Collection
 // -------------
 var PostsCollection = Backbone.Collection.extend({
   model: Post,
@@ -28,6 +35,20 @@ var PostsCollection = Backbone.Collection.extend({
 });
 
 // -------------
+// Post Item View
+// -------------
+var PostItemView = Backbone.View.extend({
+  tagName: 'li',
+  className: 'post',
+  template: _.template($('#blog-list-template').text()),
+
+  render: function(){
+    this.$el.html( this.template( this.model.toJSON() ) );
+  }
+
+});
+
+// -------------
 // Post List View
 // -------------
 var PostsListView = Backbone.View.extend({
@@ -35,49 +56,37 @@ var PostsListView = Backbone.View.extend({
   el: '.posts-container',
 
   initialize: function(){
-   this.listenTo(this.collection, 'sync', this.render);
+     this.listenTo(this.collection, 'sync', this.render);
   },
 
   render: function(){
     var self = this;
-    // this.$el.empty();
+    this.$el.empty();
 
     this.collection.each(function(post){
-     var itemView = new PostItemView({model: post});
-     itemView.render();
-     self.$el.append(itemView.el);
+      var itemView = new PostItemView({model: post});
+      itemView.render();
+      self.$el.append(itemView.el);
     });
-
     return this;
   }
-
 });
-
-// -------------
-// Post Item View
-// -------------
-var PostItemView = Backbone.View.extend ({
-  tagName: 'li',
-  className: 'post',
-  template: _.template($('[data-template-name=blog-list-template]').text()),
-
-  render: function(){
-  this.$el.html(this.template(this.model.toJSON()));
-  return this;
-}
-});
-
 
 // -------------
 // Post Detail View
 // -------------
 var PostDetailView = Backbone.View.extend({
+  el: $('.js-post'),
 
+  template: _.template($('#view-post-template').text()),
 
+  render: function(){
+    this.$el.html(this.template(this.model.toJSON()));
+  }
 });
 
 // -------------
-// App Router
+// Router
 // -------------
 var AppRouter = Backbone.Router.extend({
   routes: {
@@ -88,17 +97,21 @@ var AppRouter = Backbone.Router.extend({
   initialize: function(){
     this.posts = new PostsCollection();
     this.postsList = new PostsListView({collection: this.posts});
+    this.postDetailView = new PostDetailView();
   },
 
   index: function(){
     this.posts.fetch();
     this.postsList.render();
-    console.log(this.postsList);
-
   },
 
-  getPost: function(){
-
+  getPost: function(id){
+    var self = this;
+    this.posts.fetch().done(function (){
+      self.postDetailView.model = self.posts.get(id);
+      self.postDetailView.render();
+      $('.posts-container').html(self.postDetailView.el);
+    });
   }
 });
 
@@ -113,12 +126,9 @@ $.ajaxSetup({
   }
 });
 
-// -------------
-// Glue code
-// -------------
-$(document).ready(function(){
-  window.router = new AppRouter();
-  Backbone.history.start();
-});
+  $(document).ready(function(){
+    App.router = new AppRouter();
+    Backbone.history.start();
+  });
 
 })();
