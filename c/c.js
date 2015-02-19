@@ -28,20 +28,6 @@ var PostsCollection = Backbone.Collection.extend({
 });
 
 // -------------
-// Post Item View
-// -------------
-var PostItemView = Backbone.View.extend ({
-  tagName: 'li',
-  className: 'post',
-  template: _.template($('[data-template-name=blog-list-template]').text()),
-
-  render: function(){
-    this.$el.html( ( this.model.toJSON() ) );
-    return this;
-  }
-});
-
-// -------------
 // Post List View
 // -------------
 var PostsListView = Backbone.View.extend({
@@ -54,7 +40,7 @@ var PostsListView = Backbone.View.extend({
 
   render: function(){
     var self = this;
-    this.$el.empty();
+    // this.$el.empty();
 
     this.collection.each(function(post){
      var itemView = new PostItemView({model: post});
@@ -65,6 +51,20 @@ var PostsListView = Backbone.View.extend({
     return this;
   }
 
+});
+
+// -------------
+// Post Item View
+// -------------
+var PostItemView = Backbone.View.extend ({
+  tagName: 'li',
+  className: 'post',
+  template: _.template($('[data-template-name=blog-list-template]').text()),
+
+  render: function(){
+  this.$el.html(this.template(this.model.toJSON()));
+  return this;
+}
 });
 
 
